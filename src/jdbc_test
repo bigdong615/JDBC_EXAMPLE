@@ -1,0 +1,70 @@
+package rock.dong.jucdemo;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.UUID;
+
+public class jdbc_test {
+
+    private static final String SQL_CREATE = "CREATE TABLE EMPLOYEE"
+            + "("
+            + " ID serial,"
+            + " NAME varchar(100) NOT NULL,"
+            + " SALARY numeric(15, 2) NOT NULL,"
+            + " PRIMARY KEY (ID)"
+            + ")";
+    public static void main(String[] args) {
+        String url = "jdbc:mysql://localhost:3306/ssmbuild";
+        String user = "root";
+        String password = "P@55word";
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection(url, user, password);
+
+            String sql = "INSERT INTO t_user (id, username) VALUES (?, ?)";
+            preparedStatement = connection.prepareStatement(sql);
+            long startTime = System.currentTimeMillis();
+            for (int i = 0; i < 100000; i++) {
+                preparedStatement.setString(1, "value1_" + UUID.randomUUID().toString().replaceAll("-", ""));
+                preparedStatement.setString(2, "value2_" + UUID.randomUUID().toString());
+                preparedStatement.addBatch();
+            }
+
+            preparedStatement.executeBatch();
+            System.out.println("Data inserted successfully.");
+            long endTime = System.currentTimeMillis()- startTime;
+            System.out.println("共耗时" +endTime+"毫秒");
+
+            preparedStatement= connection.prepareStatement(SQL_CREATE);
+            preparedStatement.execute();
+
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (preparedStatement != null) {
+                try {
+                    preparedStatement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}
